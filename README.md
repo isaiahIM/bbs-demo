@@ -36,9 +36,9 @@ Spring Boot 4.1.1, Java 25, Spring Data JPA, H2/PostgreSQL Multi-Profile DB를 �
 - DTO 객체에 최신 Java 표준인 **Java `record`**를 전면 도입하여 데이터 불변성(Immutability)을 보장하고 불필요한 보일러플레이트 코드를 제거했습니다.
 - 엔티티 ↔ DTO 변환 시 콤팩트 생성자(Compact Constructor)와 Java Stream `.toList()`를 활용합니다.
 
-### 5. 🔍 다중 키워드 인덱싱 & 화면 중복 방지 (Swagger UI Optimization)
-- 동일 API가 여러 태그 섹션에 중복 렌더링되는 문제를 해결하기 위해 태그는 **주 도메인 1개로 고정**했습니다.
-- 스니펫 문서 ID에 `board_delete_게시판_삭제_제거_delete` 형태의 다중 키워드 인덱스를 부여하고 `springdoc.swagger-ui.displayOperationId: false` 옵션을 지정하여, **화면 중복 없이 한글/영문 키워드(`삭제`, `delete`, `등록`, `post` 등) 실시간 검색이 100% 동작**하도록 구현했습니다.
+### 5. 🔍 화면 중복 방지 및 직관적인 API 명세 (Swagger UI Optimization)
+- 동일 API가 여러 태그 섹션에 중복 렌더링되는 문제를 방지하기 위해 태그를 **주 도메인(`1. 게시판 API`, `2. 게시글 API`, `3. 댓글 API`) 1개로 고정**했습니다.
+- `springdoc.swagger-ui.displayOperationId: false` 옵션을 지정하여 깔끔한 화면을 유지하고, 각 API의 `summary`와 `description` 및 파라미터 설명을 충실히 작성하여 Swagger UI에서 직관적인 문서 탐색이 가능합니다.
 
 ### 6. 🔀 프로필별 다중 DB 환경 구성 (Multi-Profile Database)
 - **Local**: H2 In-Memory 데이터베이스 (외부 DB 설치 없이 즉시 개발 및 테스트 가능)
@@ -202,22 +202,23 @@ public PostDto.DetailResponse updatePost(Long postId, PostDto.UpdateRequest requ
 | | `GET` | `/api/boards/{boardId}/posts` | 특정 게시판의 게시글 목록 조회 |
 | | `GET` | `/api/posts/{postId}` | 게시글 상세 조회 (댓글 목록 포함) |
 | | `PUT` | `/api/posts/{postId}` | 게시글 수정 (작성자 본인 검증) |
-| | `DELETE` | `/api/posts/{postId}?writer={name}` | 게시글 삭제 (작성자 본인 검증) |
+| | `DELETE` | `/api/posts/{postId}?writer={writer}` | 게시글 삭제 (작성자 본인 검증) |
 | **댓글** | `POST` | `/api/posts/{postId}/comments` | 특정 게시글에 댓글 작성 |
 | | `GET` | `/api/posts/{postId}/comments` | 특정 게시글의 댓글 목록 조회 |
 | | `PUT` | `/api/comments/{commentId}` | 댓글 수정 (작성자 본인 검증) |
-| | `DELETE` | `/api/comments/{commentId}?writer={name}` | 댓글 삭제 (작성자 본인 검증) |
+| | `DELETE` | `/api/comments/{commentId}?writer={writer}` | 댓글 삭제 (작성자 본인 검증) |
 
 ---
 
 ## 🧪 BDD 테스트 수트 구성 (BDD Test Suites)
 
-`Given - When - Then` 패턴에 따라 작성된 4가지 테스트 레이어로 검증됩니다.
+`Given - When - Then` 패턴에 따라 작성된 **5가지 테스트 레이어**로 100% 빈틈없이 검증됩니다.
 
-1. **도메인 단위 테스트 (`domain/`)**: `BoardDomainTest`, `PostDomainTest` (도메인 불변식 규칙 테스트)
-2. **서비스 단위 테스트 (`service/`)**: `BoardServiceBddTest`, `PostServiceBddTest`, `CommentServiceBddTest` (BDDMockito 기반 단위 테스트)
-3. **컨트롤러 REST Docs 테스트 (`controller/`)**: `BoardControllerTest`, `PostControllerTest`, `CommentControllerTest` (Spring Boot 4 `@WebMvcTest` + `@MockitoBean` + `spring-boot-restdocs` 기반 API 검증 및 OpenAPI 3.0 추출)
-4. **전체 시나리오 통합 테스트 (`integration/`)**: `BbsBddIntegrationTest` (게시판/게시글/댓글 전체 생애주기 통합 테스트)
+1. **도메인 단위 테스트 (`domain/`)**: `BoardDomainTest`, `PostDomainTest`, `CommentDomainTest` (엔티티 불변식, 필수값 및 작성자 권한 비즈니스 규칙 검증)
+2. **서비스 단위 테스트 (`service/`)**: `BoardServiceBddTest`, `PostServiceBddTest`, `CommentServiceBddTest` (BDDMockito 기반 격리 단위 테스트)
+3. **컨트롤러 REST Docs 테스트 (`controller/`)**: `BoardControllerTest`, `PostControllerTest`, `CommentControllerTest` (Spring Boot 4 `@WebMvcTest` + `@MockitoBean` + `spring-boot-restdocs` 기반 12개 API 전체 검증 및 OpenAPI 3.0 추출)
+4. **예외 핸들러 단위 테스트 (`exception/`)**: `GlobalExceptionHandlerTest` (REST API 표준 JSON 에러 응답 및 HTTP 상태 코드 검증)
+5. **전체 시나리오 통합 테스트 (`integration/`)**: `BbsBddIntegrationTest` (게시판/게시글/댓글 전체 생애주기 통합 시나리오 테스트)
 
 ---
 
@@ -225,11 +226,16 @@ public PostDto.DetailResponse updatePost(Long postId, PostDto.UpdateRequest requ
 
 ### 1. 테스트 실행 및 OpenAPI 명세(`openapi3.yaml`) 자동 추출
 ```powershell
-.\gradlew.bat test openapi3
+.\gradlew.bat clean openapi3
 ```
-> 실행 완료 시 [`src/main/resources/static/docs/openapi3.yaml`](src/main/resources/static/docs/openapi3.yaml) 파일이 최신 상태로 생성됩니다.
+> 실행 완료 시 [`src/main/resources/static/docs/openapi3.yaml`](src/main/resources/static/docs/openapi3.yaml) 파일이 최신 상태로 갱신됩니다.
 
-### 2. 프로필별 애플리케이션 실행
+### 2. 전체 단위 및 통합 테스트 실행
+```powershell
+.\gradlew.bat test
+```
+
+### 3. 프로필별 애플리케이션 실행
 
 #### 🔹 Local 환경 (H2 In-Memory DB)
 ```powershell
@@ -246,7 +252,7 @@ public PostDto.DetailResponse updatePost(Long postId, PostDto.UpdateRequest requ
 java -jar -Dspring.profiles.active=prod build/libs/bbs-demo-0.0.1-SNAPSHOT.jar
 ```
 
-### 3. 주요 접속 주소
+### 4. 주요 접속 주소
 - **Swagger UI (대화형 API 문서)**: `http://localhost:8080/swagger-ui/index.html`
 - **OpenAPI 3.0 YAML 파일**: `http://localhost:8080/docs/openapi3.yaml`
 - **H2 DB 웹 콘솔 (Local 프로필)**: `http://localhost:8080/h2-console`

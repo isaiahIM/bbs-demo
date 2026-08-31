@@ -59,5 +59,17 @@ class BoardDomainTest {
             assertThat(board.getName()).isEqualTo("수정게시판");
             assertThat(board.getDescription()).isEqualTo("수정설명");
         }
+
+        @Test
+        @DisplayName("Given 이름이 빈 값인 정보가 주어졌을 때, When 게시판 수정을 시도하면, Then IllegalArgumentException 예외가 발생한다.")
+        void updateBoardFailureWhenNameIsEmpty() {
+            // Given
+            Board board = Board.create("기존게시판", "기존설명");
+
+            // When & Then
+            assertThatThrownBy(() -> board.update("", "수정설명"))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("게시판 이름은 필수 입력 항목입니다.");
+        }
     }
 }

@@ -18,9 +18,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
+import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static com.epages.restdocs.apispec.ResourceSnippetParameters.builder;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
@@ -95,6 +97,60 @@ class BoardControllerTest {
     }
 
     @Test
+    @DisplayName("Given 게시판 ID가 주어졌을 때, When GET /api/boards/{boardId}를 호출하면, Then 200 OK와 게시판 상세 정보를 반환한다.")
+    void getBoardBddTest() throws Exception {
+        // Given
+        Long boardId = 1L;
+        Board mockBoard = createMockBoard(boardId, "자유게시판", "자유 게시판입니다.");
+        given(boardService.getBoard(boardId)).willReturn(new BoardDto.Response(mockBoard));
+
+        // When & Then
+        mockMvc.perform(get("/api/boards/{boardId}", boardId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.name").value("자유게시판"))
+                .andExpect(jsonPath("$.description").value("자유 게시판입니다."))
+                .andDo(document("board-get-detail",
+                        resource(builder()
+                                .tag("1. 게시판 API")
+                                .summary("게시판 단건 조회")
+                                .description("게시판 ID로 특정 게시판의 상세 정보를 조회합니다.")
+                                .pathParameters(
+                                        parameterWithName("boardId").description("게시판 ID")
+                                )
+                                .build())));
+    }
+
+    @Test
+    @DisplayName("Given 수정 요청 정보가 주어졌을 때, When PUT /api/boards/{boardId}를 호출하면, Then 200 OK와 수정된 게시판 응답을 반환한다.")
+    void updateBoardBddTest() throws Exception {
+        // Given
+        Long boardId = 1L;
+        BoardDto.Request request = new BoardDto.Request("수정게시판", "수정된 설명입니다.");
+        Board mockBoard = createMockBoard(boardId, "수정게시판", "수정된 설명입니다.");
+        given(boardService.updateBoard(eq(boardId), any(BoardDto.Request.class)))
+                .willReturn(new BoardDto.Response(mockBoard));
+
+        // When & Then
+        mockMvc.perform(put("/api/boards/{boardId}", boardId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.name").value("수정게시판"))
+                .andExpect(jsonPath("$.description").value("수정된 설명입니다."))
+                .andDo(document("board-update",
+                        resource(builder()
+                                .tag("1. 게시판 API")
+                                .summary("게시판 수정")
+                                .description("게시판의 이름과 설명을 수정합니다.")
+                                .pathParameters(
+                                        parameterWithName("boardId").description("게시판 ID")
+                                )
+                                .build())));
+    }
+
+    @Test
     @DisplayName("Given 게시판 ID가 주어졌을 때, When DELETE /api/boards/{boardId}를 호출하면, Then 204 No Content 상태를 반환한다.")
     void deleteBoardBddTest() throws Exception {
         // Given
@@ -109,6 +165,9 @@ class BoardControllerTest {
                                 .tag("1. 게시판 API")
                                 .summary("게시판 삭제")
                                 .description("게시판 및 하위 게시글을 삭제합니다.")
+                                .pathParameters(
+                                        parameterWithName("boardId").description("게시판 ID")
+                                )
                                 .build())));
     }
 }

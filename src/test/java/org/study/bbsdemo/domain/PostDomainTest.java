@@ -34,6 +34,51 @@ class PostDomainTest {
         }
 
         @Test
+        @DisplayName("Given 게시판이 null일 때, When 게시글 생성을 시도하면, Then IllegalArgumentException 예외가 발생한다.")
+        void createPostFailureWhenBoardIsNull() {
+            // When & Then
+            assertThatThrownBy(() -> Post.create(null, "제목", "내용", "작성자"))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("게시글은 소속 게시판이 존재해야 합니다.");
+        }
+
+        @Test
+        @DisplayName("Given 제목이 빈 값일 때, When 게시글 생성을 시도하면, Then IllegalArgumentException 예외가 발생한다.")
+        void createPostFailureWhenTitleIsEmpty() {
+            // Given
+            Board board = Board.create("자유게시판", "설명");
+
+            // When & Then
+            assertThatThrownBy(() -> Post.create(board, "  ", "내용", "작성자"))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("제목은 필수 입력 항목입니다.");
+        }
+
+        @Test
+        @DisplayName("Given 내용이 빈 값일 때, When 게시글 생성을 시도하면, Then IllegalArgumentException 예외가 발생한다.")
+        void createPostFailureWhenContentIsEmpty() {
+            // Given
+            Board board = Board.create("자유게시판", "설명");
+
+            // When & Then
+            assertThatThrownBy(() -> Post.create(board, "제목", "  ", "작성자"))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("내용은 필수 입력 항목입니다.");
+        }
+
+        @Test
+        @DisplayName("Given 작성자가 빈 값일 때, When 게시글 생성을 시도하면, Then IllegalArgumentException 예외가 발생한다.")
+        void createPostFailureWhenWriterIsEmpty() {
+            // Given
+            Board board = Board.create("자유게시판", "설명");
+
+            // When & Then
+            assertThatThrownBy(() -> Post.create(board, "제목", "내용", "  "))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("작성자는 필수 입력 항목입니다.");
+        }
+
+        @Test
         @DisplayName("Given 타인 작성자의 수정 요청이 올 때, When 게시글 수정을 시도하면, Then 권한 예외가 발생한다.")
         void updatePostUnauthorizedFailure() {
             // Given
@@ -59,6 +104,56 @@ class PostDomainTest {
             // Then
             assertThat(post.getTitle()).isEqualTo("수정 제목");
             assertThat(post.getContent()).isEqualTo("수정 내용");
+        }
+
+        @Test
+        @DisplayName("Given 수정 제목이 빈 값일 때, When 게시글 수정을 시도하면, Then IllegalArgumentException 예외가 발생한다.")
+        void updatePostFailureWhenTitleIsEmpty() {
+            // Given
+            Board board = Board.create("자유게시판", "설명");
+            Post post = Post.create(board, "원본 제목", "원본 내용", "원작성자");
+
+            // When & Then
+            assertThatThrownBy(() -> post.update("", "수정 내용", "원작성자"))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("제목은 필수 입력 항목입니다.");
+        }
+
+        @Test
+        @DisplayName("Given 수정 내용이 빈 값일 때, When 게시글 수정을 시도하면, Then IllegalArgumentException 예외가 발생한다.")
+        void updatePostFailureWhenContentIsEmpty() {
+            // Given
+            Board board = Board.create("자유게시판", "설명");
+            Post post = Post.create(board, "원본 제목", "원본 내용", "원작성자");
+
+            // When & Then
+            assertThatThrownBy(() -> post.update("수정 제목", "  ", "원작성자"))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("내용은 필수 입력 항목입니다.");
+        }
+    }
+
+    @Nested
+    @DisplayName("댓글 연관관계 메서드 동작 시")
+    class CommentRelationshipOperations {
+
+        @Test
+        @DisplayName("Given 게시글이 존재할 때, When 댓글을 추가 및 삭제하면, Then 댓글 목록에 정상 반영된다.")
+        void addAndRemoveComment() {
+            // Given
+            Board board = Board.create("자유게시판", "설명");
+            Post post = Post.create(board, "제목", "내용", "작성자");
+            Comment comment = Comment.create(post, "댓글 내용", "댓글 작성자");
+
+            // Then (create 시 자동 추가됨)
+            assertThat(post.getComments()).hasSize(1);
+            assertThat(post.getComments()).contains(comment);
+
+            // When
+            post.removeComment(comment);
+
+            // Then
+            assertThat(post.getComments()).isEmpty();
         }
     }
 }
