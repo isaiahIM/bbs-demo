@@ -10,7 +10,9 @@ group = 'org.study'
 version = '0.0.1-SNAPSHOT'
 description = 'bbs-demo'
 
-layout.buildDirectory = file("C:/temp/bbs-demo-build")
+if (System.getProperty("os.name").toLowerCase().contains("windows") && file("C:/temp").exists() && System.getenv("CI") == null) {
+    layout.buildDirectory = file("C:/temp/bbs-demo-build")
+}
 
 java {
     toolchain {
