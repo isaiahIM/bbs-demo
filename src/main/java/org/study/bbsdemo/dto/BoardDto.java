@@ -9,7 +9,8 @@ public class BoardDto {
     public record Request(
             String name,
             String description
-    ) {}
+    ) {
+    }
 
     public record Response(
             Long id,

@@ -9,12 +9,14 @@ public class CommentDto {
     public record CreateRequest(
             String content,
             String writer
-    ) {}
+    ) {
+    }
 
     public record UpdateRequest(
             String content,
             String writer
-    ) {}
+    ) {
+    }
 
     public record Response(
             Long id,

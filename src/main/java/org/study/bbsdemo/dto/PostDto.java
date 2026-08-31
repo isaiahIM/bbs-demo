@@ -11,13 +11,15 @@ public class PostDto {
             String title,
             String content,
             String writer
-    ) {}
+    ) {
+    }
 
     public record UpdateRequest(
             String title,
             String content,
             String writer
-    ) {}
+    ) {
+    }
 
     public record SummaryResponse(
             Long id,

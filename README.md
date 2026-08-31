@@ -59,7 +59,8 @@ Spring Boot 4.1.1, Java 25, Spring Data JPA, H2/PostgreSQL Multi-Profile DB를 �
 | **Database** | H2 (Local/Test), PostgreSQL (Dev/Prod) | 프로필별 분리 적용 |
 | **ORM** | Spring Data JPA / Hibernate | Entity, Repository, JPA Auditing (`createdAt`, `updatedAt`) |
 | **API Docs** | Spring REST Docs + OpenAPI 3.0 | `restdocs-api-spec:0.20.1` & `springdoc-openapi-starter-webmvc-ui:3.1.0` |
-| **Testing** | JUnit 5, AssertJ, BDDMockito, `@MockitoBean`, MockMvc | BDD 스타일 4단계 계층형 테스트 |
+| **Testing** | JUnit 5, AssertJ, BDDMockito, `@MockitoBean`, MockMvc | BDD 스타일 5단계 계층형 테스트 |
+| **Code Style** | Checkstyle (Google Java Style 기반) | 탭 금지, 4스페이스 들여쓰기 룰셋 적용 (`config/checkstyle/checkstyle.xml`) |
 | **Tool / Utility**| Lombok, Gradle 9.x | 코드 간소화 및 빌드 최적화 |
 
 ---
@@ -254,7 +255,12 @@ mockMvc.perform(delete("/api/boards/{boardId}", boardId))
 .\gradlew.bat test
 ```
 
-### 3. 프로필별 애플리케이션 실행
+### 3. Google Checkstyle 정적 코드 분석 실행
+```powershell
+.\gradlew.bat checkstyleMain checkstyleTest
+```
+
+### 4. 프로필별 애플리케이션 실행
 
 #### 🔹 Local 환경 (H2 In-Memory DB)
 ```powershell
@@ -271,7 +277,7 @@ mockMvc.perform(delete("/api/boards/{boardId}", boardId))
 java -jar -Dspring.profiles.active=prod build/libs/bbs-demo-0.0.1-SNAPSHOT.jar
 ```
 
-### 4. 주요 접속 주소
+### 5. 주요 접속 주소
 - **Swagger UI (대화형 API 문서)**: `http://localhost:8080/swagger-ui/index.html`
 - **OpenAPI 3.0 YAML 파일**: `http://localhost:8080/docs/openapi3.yaml`
 - **H2 DB 웹 콘솔 (Local 프로필)**: `http://localhost:8080/h2-console`
