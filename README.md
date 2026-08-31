@@ -18,10 +18,13 @@ Spring Boot 4.1.1, Java 25, Spring Data JPA, H2/PostgreSQL Multi-Profile DB를 �
 
 ## 🌟 프로젝트 아키텍처 핵심 특징
 
-### 1. 🟢 프로덕션 코드 0% 스웨거 오염 (Zero Swagger Annotations)
-- 컨트롤러 및 DTO 클래스에 `@Operation`, `@Schema`, `@Tag` 등 **스웨거 어노테이션을 단 1개도 사용하지 않았습니다.**
-- BDD 기반 컨트롤러 테스트(MockMvc) 실행 시 `com.epages.restdocs-api-spec (0.20.1)` 플러그인을 통해 OpenAPI 3.0 규격 문서([`openapi3.yaml`](src/main/resources/static/docs/openapi3.yaml))를 자동 추출합니다.
-- **장점**: 프로덕션 코드가 100% 순수하게 유지되며, 테스트를 통과한 검증된 API만 문서화되어 **코드와 문서의 불일치가 완전히 방지**됩니다.
+### 1. 🟢 비즈니스 코드와 문서화 코드의 완전한 분리 (Zero Swagger Annotations in Production)
+- 컨트롤러, 서비스, DTO 등 **비즈니스(프로덕션) 코드에는 문서화 목적의 코드나 어노테이션(`@Operation`, `@Schema`, `@Tag` 등)을 단 1줄도 작성하지 않았습니다.**
+- 모든 API 문서화 코드(`summary`, `description`, `pathParameters`, `queryParameters` 등)는 **오직 테스트 코드(`src/test/.../controller/`)에만 작성**되어 비즈니스 로직과 철저히 격리됩니다.
+- BDD 기반 컨트롤러 슬라이스 테스트(MockMvc) 실행 시 `com.epages.restdocs-api-spec`을 통해 OpenAPI 3.0 명세([`openapi3.yaml`](src/main/resources/static/docs/openapi3.yaml))를 자동 추출합니다.
+- **장점**: 
+  - 비즈니스/프로덕션 코드가 문서화용 부가 코드로 오염되지 않고 본래의 비즈니스 로직에만 집중할 수 있습니다.
+  - 테스트를 반드시 통과해야만 문서가 생성되므로 **코드 변경 시 문서 불일치(Drift)가 100% 원천 차단**됩니다.
 
 ### 2. ⚡ Spring Boot 4 & Java 25 최신화
 - **Spring Boot 4.1.1** 및 **Java 25** 툴체인을 적용하여 최신 런타임 최적화와 향상된 언어 기능을 활용합니다.
@@ -185,6 +188,22 @@ public PostDto.DetailResponse updatePost(Long postId, PostDto.UpdateRequest requ
     post.update(request.title(), request.content(), request.writer());
     return new PostDto.DetailResponse(post);
 }
+```
+
+### 4. 테스트 코드 기반 API 문서화 예시 (`BoardControllerTest.java`)
+> **컨트롤러(비즈니스 코드)는 순수하게 유지**하고, API 명세 정보는 **테스트 코드에서 선언**합니다.
+```java
+mockMvc.perform(delete("/api/boards/{boardId}", boardId))
+        .andExpect(status().isNoContent())
+        .andDo(document("board-delete",
+                resource(builder()
+                        .tag("1. 게시판 API")
+                        .summary("게시판 삭제")
+                        .description("게시판 및 하위 게시글을 삭제합니다.")
+                        .pathParameters(
+                                parameterWithName("boardId").description("게시판 ID")
+                        )
+                        .build())));
 ```
 
 ---
