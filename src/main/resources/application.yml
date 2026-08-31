@@ -1,0 +1,14 @@
+spring:
+  profiles:
+    active: local
+  application:
+    name: bbs-demo
+
+springdoc:
+  swagger-ui:
+    url: /docs/openapi3.yaml
+    filter: true
+    doc-expansion: list
+    displayOperationId: false
+    operationsSorter: method
+    tagsSorter: alpha

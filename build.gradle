@@ -1,0 +1,57 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.epages.restdocs-api-spec' version '0.20.1'
+}
+
+group = 'org.study'
+version = '0.0.1-SNAPSHOT'
+description = 'bbs-demo'
+
+layout.buildDirectory = file("C:/temp/bbs-demo-build")
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0'
+
+    runtimeOnly 'com.h2database:h2'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.boot:spring-boot-restdocs'
+    testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+    testImplementation 'com.epages:restdocs-api-spec-mockmvc:0.20.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+openapi3 {
+    server = 'http://localhost:8080'
+    title = 'BBS Demo REST API Specification'
+    description = 'Spring REST Docs 기반 OpenAPI 3.0 자동 추출 명세서'
+    version = '1.0.0'
+    format = 'yaml'
+    outputDirectory = 'src/main/resources/static/docs'
+    outputFileNamePrefix = 'openapi3'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
