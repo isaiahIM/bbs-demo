@@ -13,3 +13,6 @@ spring:
       hibernate:
         format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+swagger:
+  server-url: ${SWAGGER_SERVER_URL}
