@@ -223,7 +223,7 @@ jobs:
 
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Create remote environment file
+      - name: Verify remote environment file exists
         shell: bash
         run: |
           set -euo pipefail
@@ -231,10 +231,16 @@ jobs:
           ssh -i ~/.ssh/deploy_key -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" \
             "mkdir -p ~/$APP_NAME"
 
-          {
-            printf 'TZ=Asia/Seoul\n'
-          } | ssh -i ~/.ssh/deploy_key -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" \
-            "cat > ~/$APP_NAME/.env && chmod 600 ~/$APP_NAME/.env"
+          ssh -i ~/.ssh/deploy_key -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" \
+            "bash -s" <<REMOTE
+          set -euo pipefail
+          if [ ! -f "\$HOME/$APP_NAME/.env" ]; then
+            echo "Error: \$HOME/$APP_NAME/.env file does not exist on the remote server."
+            echo "Please create \$HOME/$APP_NAME/.env with required DB credentials and configurations."
+            exit 1
+          fi
+          echo "Remote environment file (\$HOME/$APP_NAME/.env) verified."
+          REMOTE
 
       - name: Pull and run Docker container
         env:
@@ -255,7 +261,7 @@ jobs:
 
           if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
             printf '%s' "$DOCKERHUB_TOKEN" | ssh -i ~/.ssh/deploy_key -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" \
-              "sudo docker login --username '$DOCKERHUB_USERNAME' --password-stdin"
+              "docker login --username '$DOCKERHUB_USERNAME' --password-stdin"
           fi
 
           ssh -i ~/.ssh/deploy_key -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" \
@@ -264,9 +270,9 @@ jobs:
 
           DEPLOY_DIR="$HOME/$APP_NAME"
 
-          sudo docker pull "$IMAGE_REF"
-          sudo docker rm -f "$APP_NAME" 2>/dev/null || true
-          sudo docker run -d \
+          docker pull "$IMAGE_REF"
+          docker rm -f "$APP_NAME" 2>/dev/null || true
+          docker run -d \
             --name "$APP_NAME" \
             --restart unless-stopped \
             --env-file "$DEPLOY_DIR/.env" \
@@ -290,7 +296,7 @@ jobs:
                 exit 0
               fi
             else
-              if [ "$(sudo docker inspect -f '{{.State.Running}}' "$APP_NAME")" = "true" ]; then
+              if [ "$(docker inspect -f '{{.State.Running}}' "$APP_NAME")" = "true" ]; then
                 echo "Container is running. Install curl on the server for HTTP verification."
                 exit 0
               fi
@@ -300,7 +306,7 @@ jobs:
           done
 
           echo "Deployment verification failed."
-          sudo docker logs --tail 100 "$APP_NAME"
+          docker logs --tail 100 "$APP_NAME"
           exit 1
           REMOTE
 
